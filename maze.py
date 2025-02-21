@@ -1,10 +1,10 @@
 class Node:
 
-    def __init__(self, state, parent, action) :
+    def __init__(self, state, parent, action, depth=0) :
         self.state = state
         self.parent = parent
         self.action = action
-
+        self.depth = depth
 
 # class for DFS 
 class StackFrontier():
@@ -189,6 +189,56 @@ class Maze():
                     child = Node(state= state, parent=node, action=action)
                     frontier.add(child)
 
+    
+    
+    def solve_ids(self, depth_limit=0):
+        """
+        Solve the maze using iterative deepening search (IDS).
+        """
+        self.num_explored = 0
+
+        while True:
+            # Start a depth-limited DFS from the starting point.
+            start = Node(state=self.start, parent=None, action=None, depth=0)
+            frontier = StackFrontier()
+            frontier.add(start)
+            
+            # We'll use a DFS that does not add nodes beyond the current depth limit.
+            while not frontier.empty():
+                node = frontier.remove()
+                self.num_explored += 1
+
+                # Check if we've reached the goal.
+                if node.state == self.goal:
+                    actions = []
+                    cells = []
+                    while node.parent is not None:
+                        actions.append(node.action)
+                        cells.append(node.state)
+                        node = node.parent
+                    actions.reverse()
+                    cells.reverse()
+                    self.solution = (actions, cells)
+                    return  # solution found
+
+                # Only expand this node if we haven't hit the depth limit.
+                if node.depth < depth_limit:
+                    for action, state in self.neighbors(node.state):
+                        # Prevent cycles by checking if the state is already in the current path.
+                        ancestor = node
+                        cycle = False
+                        while ancestor is not None:
+                            if ancestor.state == state:
+                                cycle = True
+                                break
+                            ancestor = ancestor.parent
+                        if cycle:
+                            continue
+                        child = Node(state=state, parent=node, action=action, depth=node.depth + 1)
+                        frontier.add(child)
+            # No solution was found within the current depth limit.
+            depth_limit += 1
+
 
 
 
@@ -207,8 +257,21 @@ def main():
     maze = Maze(args.filename)
     
     # Solve the maze
-    print("Solving the maze...")
-    maze.solve()
+   # print("Solving the maze...")
+    #maze.solve()
+    
+    # Print the solution
+    #print("Solution found!")
+   # maze.print()
+
+    # Print the list of actions:
+   # print("State Explored: ", maze.num_explored)
+
+
+     # Solve the maze
+    print("Solving the maze with ids")
+    maze.solve_ids(10)
+
     
     # Print the solution
     print("Solution found!")
